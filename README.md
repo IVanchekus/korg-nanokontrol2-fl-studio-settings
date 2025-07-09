@@ -14,7 +14,7 @@ It requires a KORG nanoKONTROL2 MIDI-controller and FL Studio v20.7.3 or later t
 * Play button LED flashes in sync with the project tempo
 * Enter a pause-mode lightshow when idle for a dynamic visual experience
 * Numerous configurable options to customize your setup
-* Full control over all 125 mixer tracks in FL Studio
+* Full control over all mixer tracks in FL Studio (including dynamic tracks in FL Studio 25.1)
 * Highlighted mixer tracks for easier navigation and control
 * Adjust the volume of multiple selected tracks with a single slider
 * Fine-tune track volumes with 0.1dB precision

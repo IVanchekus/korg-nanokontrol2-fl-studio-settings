@@ -69,8 +69,8 @@ def OnControlChange(event):
 								nr = selectedChannel()
 								if button == 19: soloChannel(nr)
 								elif button == 20: muteChannel(nr)
-				except TypeError:
-				# kn.control_not_linked() throws TypeError when creating controller links.
+				except (TypeError, RuntimeError):
+				# kn.control_not_linked() throws an exception when creating controller links.
 				# This will catch the error silently.
 					event.handled = False
 
@@ -91,7 +91,7 @@ def OnControlChange(event):
 						else: kn.volume_fader(event.data1,event.data2)
 					elif mode == 1 and not kn.shift: kn.channel_control(event)
 					elif mode == 2 and not kn.shift: kn.playlist_zoom(event)
-			except TypeError:
+			except (TypeError, RuntimeError):
 				event.handled = False
 
 			if config.LinkOverriding:
@@ -111,7 +111,7 @@ def OnControlChange(event):
 					elif mode == 0 and kn.shift: kn.mixer_knobs(event.data1,event.data2,False)
 					elif mode == 1 and not kn.shift: kn.channel_control(event)
 					elif mode == 2 and not kn.shift: kn.tempo_knob(event)
-			except TypeError:
+			except (TypeError, RuntimeError):
 				event.handled = False
 
 			if config.LinkOverriding:
@@ -611,7 +611,7 @@ class Kontrol:
 		self.metronome = None
 		self.volume = None
 		self.faderlock = [0,time()]
-		self.selectedtracks = ()
+		self.selectedtracks = {}
 		self.mixdiff = config.PreserveMixDiff
 		self.track_select = (0,1)					# Track buttons cc codes
 		self.markers = (3,4,5)						# Marker buttons cc codes
@@ -634,14 +634,14 @@ class Kontrol:
 		0.00145: (-67.0,0.00001), 0.0013: (-68.0,0.00001),  0.0012: (-69.0,0.000015)}
 		self.end_table = {0.001: -70.5, 0.00095: -71.0, 0.0009: -71.6, 0.0008: -72.3, 0.00075: -73.0, 0.0007: -73.7, 0.00065: -74.5, 0.00055: -75.5,
 		0.0005: -76.5, 0.00045: -77.6, 0.0004: -79.0, 0.0003: -80.6, 0.00025: -82.5, 0.0002: -85.0, 0.00015: -88.5, 0.00009: -94.5, 0.0: -100.0}
-		d1 = '7363726970742076312e3420627920526f62696e2043616c76696e20286f6c79726863290a'
+		d1 = '7363726970742076312e342e3220627920526f62696e2043616c76696e20286f6c79726863290a'
 		d2 = '5f0a205f205f5f2020205f5f205f205f205f5f2020205f5f5f20205f205f5f205f5f5f2020205f5f5f7c207c5f205f5f5f205f205f5f0a7c20275f205c202f205f60207c20275f205c20\
 		2f205f205c7c20275f2060205f205c202f205f205c205f5f2f205f205c20275f5f7c0a7c207c207c207c20285f7c207c207c207c207c20285f29207c207c207c207c207c207c20205f5f2f207c7c\
 		20205f5f2f207c0a7c5f7c207c5f7c5c5f5f2c5f7c5f7c207c5f7c5c5f5f5f2f7c5f7c207c5f7c207c5f7c5c5f5f5f7c5c5f5f5c5f5f5f7c5f7c0a'
 		self.pickup = True if getVersion() >= 13 else False
 		self.link_created = False
 		self.set_channel_rectangle(hide=True) if config.ChannelRectCtrl else self.set_channel_rectangle(clear=True)
-		print(bytes.fromhex('20'*40+d2+'20'*17+d1).decode('utf-8'))
+		print(bytes.fromhex('20'*40+d2+'20'*15+d1).decode('utf-8'))
 
 
 	def smr(self,key):
@@ -783,10 +783,11 @@ class Kontrol:
 
 
 	def selected_tracks(self,update=False):
-	#	Returns a tuple of all the selected tracks in the mixer
+	#	Returns a dict of all the selected tracks in the mixer
+		insert_tracks = trackCount() - 1
 		tracklist = ()
 		selectedtracks = {}
-		for track in range(126):
+		for track in range(insert_tracks):
 			if isTrackSelected(track):
 				tracklist += (track,)
 		for track in tracklist:
@@ -1016,9 +1017,11 @@ class Kontrol:
 
 	def set_mixer_range(self,start):
 	#	This generate lists of which tracks are currently controlled
-		mixdict = {}		
+		mixdict = {}
+		range_size = 7 if config.StickyMaster else 8
+		max_start = trackCount() - range_size - 1
 
-		if start not in range(0,120): raise ValueError("start argument must be a number between 0-119")
+		if start < 0 or start > max_start: raise ValueError("start argument must be a number between 0-"+str(max_start))
 		if not config.StickyMaster:
 			mixer = [i for i in range(start,start+8)]	# Generate a list of 8 mixer tracks
 			smr_mixer = [i for i in range(start,start+8) for n in range(3)]	# duplicate each track 3 times ('S'+'M'+'R')
@@ -1110,7 +1113,8 @@ class Kontrol:
 		else:
 			crDisplayRect(0,start,0,end,MaxInt,10)
 			self.crdisplayrect = 1
-		if not isPlaying(): self.set_smr_status()
+		if config.PeakMeter and isPlaying(): pass
+		else: self.set_smr_status()
 
 
 	def set_range_color(self,state=None):
@@ -1136,13 +1140,13 @@ class Kontrol:
 			if config.StickyMaster: r1 = mixer_range[1]
 			else: r1 = mixer_range[0]
 			try: setTrackNumber(r1,1)
-			except: pass
+			except (TypeError, RuntimeError): pass
 			
 			for track in mixer_range:
 				color = getTrackColor(track)
 				if color != marked:
 					try: setTrackColor(track,marked)
-					except: pass
+					except (TypeError, RuntimeError): pass
 			
 			for track in mixer_range:
 				color = getTrackColor(track)
@@ -1183,7 +1187,7 @@ class Kontrol:
 			try:
 				color = getTrackColor(track)
 				if color == marked: setTrackColor(track,default)
-			except: pass
+			except (TypeError, RuntimeError): pass
 
 
 	def rename_range(self,state):
@@ -1201,7 +1205,7 @@ class Kontrol:
 					if n[0] == "[" and n[-1] == "]": name = n[1:-1]
 				try:
 					if name: setTrackName(track,name)
-				except: pass		# Avoid a script-crash in case FL Studio is busy and throws an error
+				except (TypeError, RuntimeError): pass		# Avoid a script-crash in case FL Studio is busy and throws an error
 
 			if state ==2:		# clear rightmost track
 				track = mixer_range[-1] +1
@@ -1214,7 +1218,7 @@ class Kontrol:
 					n = getTrackName(track)
 					if n[0] == "[" and n[-1] == "]": name = n[1:-1]
 					if name: setTrackName(track,name)
-			except: pass
+			except (TypeError, RuntimeError): pass
 
 
 	def no_brackets(self):
@@ -1235,16 +1239,21 @@ class Kontrol:
 		highlight = config.ColoredRange
 		d_rect = config.RangeDisplayRect
 		brackets = config.BracketedRange
-		mode = self.current_mode
+		range_size = 7 if master else 8
+		max_start = trackCount() - range_size - 1
+		min_start = 1 if master else 0
 
 		if master: track = mixer_range[1]
 		else: track = mixer_range[0]
 
+		def check_track_bounds(track):
+			if track < min_start or track > max_start:
+				return False
+			return True
+
 		if button == markers[0] and len(self.selectedtracks) == 1:	# Set-button
 			track = trackNumber()
-			if master and track < 1 or track > 119: return	# Prevent the track-range from being moved too far
-			elif not master and track > 118: return
-			else:
+			if check_track_bounds(track):
 				if highlight: self.set_range_color(1)
 				if brackets: self.rename_range(0)
 				self.set_mixer_range(track)
@@ -1255,9 +1264,7 @@ class Kontrol:
 
 		elif button == markers[1]:	# Marker prev-button
 			track -= 1
-			if master and track < 1: pass
-			elif not master and track < 0: pass
-			else:
+			if check_track_bounds(track):
 				self.set_mixer_range(track)
 				if highlight: self.set_range_color(2)
 				if d_rect: self.set_mixer_rectangle()
@@ -1270,9 +1277,7 @@ class Kontrol:
 					
 		elif button == markers[2]:	# Marker next-button
 			track += 1
-			if master and track < 1 or track > 119: return	# Prevent the track-range from being moved too far
-			elif not master and track > 118: return
-			else:
+			if check_track_bounds(track):
 				self.set_mixer_range(track)
 				if highlight: self.set_range_color(3)
 				if d_rect: self.set_mixer_rectangle()
@@ -1286,18 +1291,18 @@ class Kontrol:
 	def split_master(self,button):
 	#	This locks/unlocks the master track to the first control group
 		self.shiftevent = True
-		marked = False
 		umarked = -10261391
 		mixer_range = self.mixer_range
 		markers = self.markers
 		highlight = config.ColoredRange
+		marked = config.HighlightColor if highlight else False
 		d_rect = config.RangeDisplayRect
 		brackets = config.BracketedRange
 		master = config.StickyMaster
 		skip = False
 
-		if d_rect: marked = -4177326
-		elif highlight: marked = config.HighlightColor
+		if master and self.mixer_range[-1] == trackCount() - 2:
+			return	# Abort if the current mixer_range is about to expand past the max track count!
 
 		if self.shift and button == markers[0]:
 			if master:
@@ -1322,8 +1327,6 @@ class Kontrol:
 			self.set_mixer_range(trackNumber())
 			if marked:
 				if d_rect: self.set_mixer_rectangle()
-				if d_rect and m < 0: pass
-				else: setTrackColor(self.mixer_range[m],marked)
 			if brackets:
 				name = False
 				n = getTrackName(self.mixer_range[m])
@@ -1389,7 +1392,7 @@ class Kontrol:
 		if button == markers[0]:	# marker set
 			try:
 				showCSForm(channel,-1)
-			except:
+			except (TypeError, RuntimeError):
 				showEditor(channel)
 
 		if button ==  markers[1]:	# marker prev
@@ -1676,7 +1679,7 @@ class Kontrol:
 			val = getLinkedValue(id)
 			if val == -1: return True
 			else: return False
-		except:
+		except (TypeError, RuntimeError):
 			return False	# Assume control is linked if findEventID fails
 
 

@@ -100,7 +100,7 @@ class Kontrol:
 			cc = fp.slot_cc_value(self.ftune_volume, i)
 			track = self.mixer_range[i]
 			if cc is None:
-				self.fader_pickup[i] = False
+				self.fader_pickup[i] = True
 			else:
 				self.fader_pickup[i] = not fp.volumes_match(cc, getTrackVolume(track))
 
@@ -632,10 +632,16 @@ class Kontrol:
 			if state == 3:	# Update colors for inreasing range
 				clear_track = mixer_range[clear_idx] -1
 				mark_track = mixer_range[-1]
-			setTrackColor(clear_track,defaultColor(clear_track))
-			color = getTrackColor(mark_track)
-			if color != umarked and color != marked: self.defaultcolors[mark_track] = color	# Store the default color
-			setTrackColor(mark_track,marked)
+			if self._valid_track(clear_track):
+				setTrackColor(clear_track,defaultColor(clear_track))
+			if self._valid_track(mark_track):
+				color = getTrackColor(mark_track)
+				if color != umarked and color != marked: self.defaultcolors[mark_track] = color
+				setTrackColor(mark_track,marked)
+
+
+	def _valid_track(self, track):
+		return track >= 0 and track < trackCount()
 
 
 	def clean_colors(self):
@@ -647,7 +653,7 @@ class Kontrol:
 		color = getTrackColor(0)
 		if color == rect_master_color: setTrackColor(0,default)
 
-		for track in range(126):
+		for track in range(1, trackCount()):
 			try:
 				color = getTrackColor(track)
 				if color == marked: setTrackColor(track,default)

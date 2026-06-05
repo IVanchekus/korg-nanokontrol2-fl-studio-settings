@@ -5,6 +5,8 @@ import app_state as state
 
 
 def on_refresh(flags):
+	if not state.script_ready():
+		return
 	dirty_mix_sel = flags & HW_Dirty_Mixer_Sel
 	dirty_mix_disp = flags & HW_Dirty_Mixer_Display
 	dirty_mix_ctrl = flags & HW_Dirty_Mixer_Controls

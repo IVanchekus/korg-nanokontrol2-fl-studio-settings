@@ -2,6 +2,8 @@ import app_state as state
 
 
 def on_update_beat_indicator(beat):
+	if not state.script_ready():
+		return
 	blink = True
 	if not state.config.BlinkFullTempo:
 		if beat == 0: blink = False
@@ -10,4 +12,6 @@ def on_update_beat_indicator(beat):
 
 	
 def on_update_meters():
+	if not state.script_ready():
+		return
 	if state.config.PeakMeter: state.nm.main()

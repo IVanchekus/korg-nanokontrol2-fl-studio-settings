@@ -10,7 +10,9 @@ import app_state as state
 
 
 def on_control_change(event):
-	event.handled = True 					# Set the event as handled for now so it does not get sent to FL Studio unless we want it to
+	if not state.script_ready():
+		return
+	event.handled = True
 	button = event.data1
 	faders = state.kn.faders
 	knobs = state.kn.knobs

@@ -29,6 +29,16 @@ class NanoMeter:
 		self.clear = False
 
 
+	def _pickup_blocks_row(self, row):
+		kn = state.kn
+		config = state.config
+		if not config.FaderPickup or kn is None:
+			return False
+		if row < 0 or row >= len(kn.fader_pickup):
+			return False
+		return kn.fader_pickup[row]
+
+
 	def main(self):
 		db = lambda x: -59.027+382.756*x+-2690.004*x**2+12192.951*x**3+-33120.365*x**4+54482.221*x**5+-53090.953*x**6+28161.016*x**7+-6258.646*x**8
 		config = state.config
@@ -211,6 +221,8 @@ class NanoMeter:
 		else: rows = range(start_row-1,end_row)
 
 		for row in rows:
+			if self._pickup_blocks_row(row):
+				continue
 			if not light:
 				for btn in lights[row]:
 					midiOutMsg(cc,chan,btn,vel)

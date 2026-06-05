@@ -99,6 +99,11 @@ PreserveMixDiff = False
 #   If set to True, the faders of the selected tracks will stop when one of the faders
 #   reach +5.6dB. False (Default) means all the faders can be raised to +5.6dB.
 
+FaderPickup = True
+#   True (Default): after changing the mixer track range, faders must be moved to match
+#   the FL Studio volume before they control the track. Unsynced strips blink S/M/R.
+#   False: faders control volume immediately (previous behavior).
+
 # Channel rack settings
 
 ChannelrackMode = True

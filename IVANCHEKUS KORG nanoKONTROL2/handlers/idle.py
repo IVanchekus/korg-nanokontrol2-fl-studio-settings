@@ -5,6 +5,8 @@ import app_state as state
 
 
 def on_idle():
+	if not state.script_ready():
+		return
 	mode = state.kn.current_mode
 	flashtransp = state.kn.flash_transp
 	flash_end = state.kn.flash_transp_data[1]
@@ -45,6 +47,8 @@ def on_idle():
 			if time() - state.kn.hl_timecheck >= state.config.RangeRectTimer:
 				state.kn.set_mixer_rectangle(1)
 				state.kn.hl_timecheck = 0
+		if state.config.FaderPickup and state.kn.has_pickup_active():
+			state.kn.pickup_blink_handler()
 
 	if state.config.SleepTimer:
 		if state.kn.active[1]:

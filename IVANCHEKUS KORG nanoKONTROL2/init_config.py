@@ -12,7 +12,7 @@ def init_config():
 		'PlaylistMode': True, 'ControllerLinkMode': False, 'PlayBlinkTempo': True, 'PeakMeter': True, 'PlayingOnly': False, 'ReversePeak': False,
 		'BigMeter': False, 'Clipping': True, 'SelectedPeak': False, 'ArmedTracks': False, 'MultiSelect': False, 'TrackRangeOnly': False,
 		'StickyMaster': False, 'RangeDisplayRect': True, 'ColoredRange': True, 'BracketedRange': False, 'TempoBase': 80, 'PreserveMixDiff': False,
-		'BlinkFullTempo': False, 'RangeRectTimer': 0, 'ModeBlink': True, 'ChannelRectCtrl': False, 'TranspBtnLink': False, 'LinkOverriding': False,
+		'BlinkFullTempo': False, 'RangeRectTimer': 0, 'ModeBlink': True, 'ChannelRectCtrl': False, 'TranspBtnLink': False, 'LinkOverriding': False, 'FaderPickup': True,
 		}
 	numparams = {
 		'MIDIChannel': (1,16), 'TransportChan': (1,16),'SleepTimer': (0,300),'HighlightColor': (-15461356,-1),'TempoBase':(10,397), 'RangeRectTimer': (0,10),

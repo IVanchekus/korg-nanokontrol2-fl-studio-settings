@@ -11,6 +11,7 @@ import app_state as state
 from midi_map import TRACK_SELECT, MARKERS, TRANSPORT, KNOBS, FADERS, SMR_BUTTONS, smr_cc_indices
 import volume as volume_util
 from volume import VOLUME_TABLE, END_TABLE
+import fader_pickup as fp
 
 
 class Kontrol:
@@ -21,6 +22,10 @@ class Kontrol:
 		self.smr_tracks = {}
 		self.smr_chtracks = {}
 		self.mixer_range = []
+		self.ftune_volume = [None for i in range(8)]
+		self.fader_pickup = [False] * 8
+		self.pickup_blink_phase = False
+		self.pickup_blink_last = 0
 		self.set_mixer_range(1)
 		self.ch_rect_start = 0
 		self.repeat_events = {}		
@@ -40,7 +45,6 @@ class Kontrol:
 		self.shiftevent = False
 		self.set_held = False
 		self.ftune = False
-		self.ftune_volume = [None for i in range(8)]
 		self.active = [time(),True,0]
 		self.flash_transp = 0
 		self.flash_transp_data = [0,0]
@@ -73,6 +77,53 @@ class Kontrol:
 		return smr_cc_indices(key)
 
 
+	def has_pickup_active(self):
+		return state.config.FaderPickup and any(self.fader_pickup)
+
+
+	def _button_in_pickup_slot(self, button):
+		if not state.config.FaderPickup:
+			return False
+		for pos in range(min(8, len(self.fader_pickup))):
+			if not self.fader_pickup[pos]:
+				continue
+			if button in (self.smr('S')[pos], self.smr('M')[pos], self.smr('R')[pos]):
+				return True
+		return False
+
+
+	def update_fader_pickup(self):
+		if not state.config.FaderPickup:
+			self.fader_pickup = [False] * 8
+			return
+		for i in range(len(self.mixer_range)):
+			cc = fp.slot_cc_value(self.ftune_volume, i)
+			track = self.mixer_range[i]
+			if cc is None:
+				self.fader_pickup[i] = False
+			else:
+				self.fader_pickup[i] = not fp.volumes_match(cc, getTrackVolume(track))
+
+
+	def pickup_blink_handler(self):
+		if not self.has_pickup_active():
+			return
+		t = time()
+		if t - self.pickup_blink_last < 0.3:
+			return
+		self.pickup_blink_last = t
+		self.pickup_blink_phase = not self.pickup_blink_phase
+		cc = MIDI_CONTROLCHANGE
+		chan = state.config.MIDIChannel - 1
+		vel = 127 if self.pickup_blink_phase else 0
+		for pos in range(min(8, len(self.fader_pickup))):
+			if not self.fader_pickup[pos]:
+				continue
+			midiOutMsg(cc, chan, self.smr('S')[pos], vel)
+			midiOutMsg(cc, chan, self.smr('M')[pos], vel)
+			midiOutMsg(cc, chan, self.smr('R')[pos], vel)
+
+
 	def set_smr_status(self):
 	#	This is used to update the lights of the Solo, Mute and Record buttons
 		buttons = self.smr_btns
@@ -86,11 +137,15 @@ class Kontrol:
 		start = self.ch_rect_start
 		end = start + 8 if channels >= 8 else channels
 
-		for button in buttons:	# Clear all lights
+		for button in buttons:
+			if self._button_in_pickup_slot(button):
+				continue
 			midiOutMsg(cc,chan,button,0)
 
 		if mode == 0:	# Activate the buttons light if the corresponding mixer state is set
 			for pos, track in enumerate(self.mixer_range):
+				if state.config.FaderPickup and pos < len(self.fader_pickup) and self.fader_pickup[pos]:
+					continue
 				solo = 127 if isTrackSolo(track) else 0
 				mute = 127 if isTrackMuted(track) else 0
 				if state.config.ArmedTracks: rec = 127 if isTrackArmed(track) else 0
@@ -117,6 +172,13 @@ class Kontrol:
 		n = self.faders.index(fader)
 		track = self.mixer_range[n]
 
+		if state.config.FaderPickup and self.fader_pickup[n]:
+			self.ftune_volume[n] = val
+			if not fp.volumes_match(val, getTrackVolume(track)):
+				return
+			self.fader_pickup[n] = False
+			self.set_smr_status()
+
 		if self.set_held:
 			if self.ftune_volume[n]:
 				if val < self.ftune_volume[n]:
@@ -133,6 +195,13 @@ class Kontrol:
 
 	def multi_fader(self,fader,val):
 	#	This takes the input from one slider and adjusts the volume on all the selected tracks
+		n = self.faders.index(fader)
+		if state.config.FaderPickup and self.fader_pickup[n]:
+			self.ftune_volume[n] = val
+			if not fp.volumes_match(val, getTrackVolume(self.mixer_range[n])):
+				return
+			self.fader_pickup[n] = False
+			self.set_smr_status()
 		lockedfader = self.faderlock_handler(fader)
 		volume = val / 127 - 0.003
 		db = self.to_db
@@ -427,6 +496,7 @@ class Kontrol:
 			mixdict[button] = track	# Create a dictionary with buttons as keys and mixer-tracks as values
 		self.mixer_range = mixer
 		self.smr_tracks = mixdict
+		self.update_fader_pickup()
 
 
 	def sel_mixer(self,button):
@@ -758,6 +828,7 @@ class Kontrol:
 			if mode == 0:
 				if brackets: self.rename_range(1)	# Add brackets to names
 				if highlight: highlight()	# Set range colors
+				self.update_fader_pickup()
 			elif mode > 0 and 0 in modes:
 				if highlight: highlight(1)	# Clear range colors
 				if brackets: self.rename_range(0)

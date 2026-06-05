@@ -23,12 +23,15 @@ def OnInit():
 
 
 def OnDeInit():
-	if state.config.BracketedRange:
-		state.kn.rename_range(0)
-	if state.config.ColoredRange:
-		state.kn.set_range_color(1)
-	if state.config.RangeDisplayRect:
-		state.kn.set_mixer_rectangle(1)
+	if state.script_ready():
+		if state.config.BracketedRange:
+			state.kn.rename_range(0)
+		if state.config.ColoredRange:
+			state.kn.set_range_color(1)
+		if state.config.RangeDisplayRect:
+			state.kn.set_mixer_rectangle(1)
+	state.kn = None
+	state.nm = None
 
 
 def OnControlChange(event):

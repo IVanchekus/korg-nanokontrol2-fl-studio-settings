@@ -63,14 +63,17 @@ class Kontrol:
 		self.faders = FADERS
 		self.volume_table = VOLUME_TABLE
 		self.end_table = END_TABLE
-		d1 = '7363726970742076312e342e3220627920526f62696e2043616c76696e20286f6c79726863290a'
-		d2 = '5f0a205f205f5f2020205f5f205f205f205f5f2020205f5f5f20205f205f5f205f5f5f2020205f5f5f7c207c5f205f5f5f205f205f5f0a7c20275f205c202f205f60207c20275f205c20\
-		2f205f205c7c20275f2060205f205c202f205f205c205f5f2f205f205c20275f5f7c0a7c207c207c207c20285f7c207c207c207c207c20285f29207c207c207c207c207c207c20205f5f2f207c7c\
-		20205f5f2f207c0a7c5f7c207c5f7c5c5f5f2c5f7c5f7c207c5f7c5c5f5f5f2f7c5f7c207c5f7c207c5f7c5c5f5f5f7c5c5f5f5c5f5f5f7c5f7c0a'
 		self.pickup = True if getVersion() >= 13 else False
 		self.link_created = False
 		self.set_channel_rectangle(hide=True) if state.config.ChannelRectCtrl else self.set_channel_rectangle(clear=True)
-		print(bytes.fromhex('20'*40+d2+'20'*15+d1).decode('utf-8'))
+		print(
+			" _ __   __ _ _ __   ___  _ __ ___   ___| |_ ___ _ __\n"
+			"| '_ \\ / _` | '_ \\ / _ \\| '_ ` _ \\ / _ \\ __/ _ \\ '__|\n"
+			"| | | | (_| | | | | (_) | | | | | |  __/ ||  __/ |\n"
+			"|_| |_|\\__,_|_| |_|\\___/|_| |_| |_|\\___|\\__\\___|_|\n"
+			"by Robin Calvin (olyrhc)\n"
+			"forked by IVanchekus | https://github.com/IVanchekus"
+		)
 
 
 	def smr(self,key):

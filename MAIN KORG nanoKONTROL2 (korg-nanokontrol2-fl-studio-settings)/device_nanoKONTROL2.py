@@ -1,4 +1,4 @@
-# name=IVANCHEKUS KORG nanoKONTROL2 settings
+# name=MAIN KORG nanoKONTROL2 (korg-nanokontrol2-fl-studio-settings)
 # url=https://github.com/IVanchekus/korg-nanokontrol2-fl-studio-settings
 
 from device import hardwareRefreshMixerTrack, setHasMeters

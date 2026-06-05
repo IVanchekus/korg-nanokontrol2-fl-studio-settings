@@ -10,7 +10,7 @@ Python-скрипт расширяет возможности KORG nanoKONTROL2 
 
 Имя скрипта в FL Studio (поле **Controller type**):
 
-`**MAIN KORG nanoKONTROL2 (korg-nanokontrol2-fl-studio-settings)`**
+`MAIN KORG nanoKONTROL2 (korg-nanokontrol2-fl-studio-settings)`
 
 ---
 

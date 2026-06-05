@@ -29,7 +29,7 @@ ModeBlink = True
 
 # PeakMeter settings
 
-PeakMeter = True
+PeakMeter = False
 #	True (Default) enables the peak-meter.
 #	If set to False, the peak-meter lights are disabled (Noo!!)
 
@@ -59,7 +59,7 @@ MixerMode = True
 #	True (Default) enables the Mixer mode.
 #	False disables the Mixer mode.
 
-ArmedTracks = False
+ArmedTracks = True
 #	If set to True, the R-buttons will be used for arming tracks.
 #	False (Default) will use the R-buttons for selecting tracks instead.
 

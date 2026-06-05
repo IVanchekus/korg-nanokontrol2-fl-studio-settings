@@ -584,7 +584,7 @@ class Kontrol:
 		else: self.set_smr_status()
 
 
-	def set_range_color(self,state=None):
+	def set_range_color(self, action=None):
 	#	This is used to change or update the color of the tracks that are controlled
 		mixer_range = self.mixer_range
 		marked = state.config.HighlightColor
@@ -599,7 +599,7 @@ class Kontrol:
 			else: color = umarked
 			return color
 
-		if not state:
+		if not action:
 			self.defaultcolors = {}
 			for track in mixer_range:
 				color = getTrackColor(track)
@@ -623,16 +623,16 @@ class Kontrol:
 				self.init_range = False
 				if state.config.Debug: print("marked tracks found:",mark_count)
 
-		elif state ==1:	# Reset all mixer colors
+		elif action == 1:	# Reset all mixer colors
 			for track in mixer_range:
 				color = defaultColor(track)
 				setTrackColor(track,color)
 
-		elif state > 1:
-			if state == 2:	# Update colors for decreasing range
+		elif action > 1:
+			if action == 2:	# Update colors for decreasing range
 				clear_track = mixer_range[-1] +1
 				mark_track = mixer_range[clear_idx]
-			if state == 3:	# Update colors for inreasing range
+			if action == 3:	# Update colors for inreasing range
 				clear_track = mixer_range[clear_idx] -1
 				mark_track = mixer_range[-1]
 			if self._valid_track(clear_track):
@@ -663,7 +663,7 @@ class Kontrol:
 			except (TypeError, RuntimeError): pass
 
 
-	def rename_range(self,state):
+	def rename_range(self, action):
 	#	This is used to add brackets to the names of the mixer tracks that are currently controlled
 		mixer_range = self.mixer_range
 		master = state.config.StickyMaster
@@ -672,22 +672,22 @@ class Kontrol:
 			for track in mixer_range:
 				n = getTrackName(track)
 				name = None
-				if state == 1:	# Rename whole range
+				if action == 1:	# Rename whole range
 					if n[0] != "[" and n[-1] != "]": name = "[" + n + "]"
-				elif not state:	# Clear whole range
+				elif not action:	# Clear whole range
 					if n[0] == "[" and n[-1] == "]": name = n[1:-1]
 				try:
 					if name: setTrackName(track,name)
 				except (TypeError, RuntimeError): pass		# Avoid a script-crash in case FL Studio is busy and throws an error
 
-			if state ==2:		# clear rightmost track
+			if action == 2:		# clear rightmost track
 				track = mixer_range[-1] +1
-			elif state == 3:	# clear leftmost track
+			elif action == 3:	# clear leftmost track
 				if master: idx = 1
 				else: idx = 0
 				track = mixer_range[idx] -1
 			try:
-				if state > 1:
+				if action > 1:
 					n = getTrackName(track)
 					if n[0] == "[" and n[-1] == "]": name = n[1:-1]
 					if name: setTrackName(track,name)
